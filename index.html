@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8" />
+<title>Surpresa de Aniversário Tati</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<!-- Google Fonts: Playfair Display -->
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display&display=swap" rel="stylesheet" />
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(-45deg, #e0f7fa, #fce4ec, #e0f7fa, #fce4ec);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+    margin: 0;
+    padding: 20px;
+    max-width: 650px;
+    margin-left: auto;
+    margin-right: auto;
+    color: #4a4a4a;
+    overflow-x: hidden;
+    user-select: none;
+  }
+  @keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  h1 {
+    text-align: center;
+    color: #7a4e35;
+    margin-bottom: 10px;
+  }
+  p.initial-text {
+    text-align: center;
+    font-family: 'Georgia', serif;
+    font-size: 1.4rem;
+    line-height: 1.6;
+    color: #b85c38;
+    font-weight: 500;
+    margin: 0 0 25px 0;
+    font-style: italic;
+    text-shadow: 1px 1px 3px rgba(184, 92, 56, 0.3);
+  }
+  .button {
+    display: block;
+    margin: 25px auto;
+    padding: 15px 30px;
+    background-color: #7a4e35;
+    color: white;
+    font-weight: 600;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: background-color 0.3s ease;
+    user-select: none;
+  }
+  .button:hover,
+  .button:focus {
+    background-color: #603d29;
+    outline: none;
+  }
+  .section {
+    display: none;
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 7px 18px rgba(0,0,0,0.2);
+    margin-top: 20px;
+  }
+  .section.active {
+    display: block;
+  }
+  
+  .text-content {
+    opacity: 0;
+    transform: scale(0.9);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .text-content.visible {
+    opacity: 1;
+    transform: scale(1);
+  }
+  
+  #fase1 .text-content,
+  #fase2 .text-content {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    font-style: italic;
+    line-height: 1.6;
+    color: #5c4033;
+    text-align: center;
+    margin: 0 20px;
+  }
+
+  #surpresaFinal .text-content {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 1.15rem;
+    line-height: 1.6;
+    color: #4a4a4a;
+    text-align: center;
+    margin: 0 15px;
+  }
+
+  .gallery {
+    position: relative;
+    width: 100%;
+    height: 260px;
+    margin: 20px 0;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 5px 18px rgba(0,0,0,0.15);
+  }
+  .gallery img {
+    width: 100%;
+    height: 260px;
+    object-fit: cover;
+    position: absolute;
+    opacity: 0;
+    transition: opacity 1.3s ease;
+    border-radius: 15px;
+    user-select: none;
+    pointer-events: none;
+  }
+  .gallery img.active {
+    opacity: 1;
+    position: relative;
+  }
+  #map {
+    height: 280px;
+    border-radius: 15px;
+    margin-top: 25px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.15);
+  }
+  audio {
+    display: block;
+    margin: 30px auto 0 auto;
+    outline: none;
+    user-select: none;
+  }
+  #countdown {
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin: 15px 0;
+  }
+
+  #confetti-canvas {
+    pointer-events: none;
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    z-index: 9999;
+    user-select: none;
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+<header id="headerImage" style="text-align: center; margin-top: 30px;">
+  <img src="teste1.png" alt="Ilustração do casal" style="max-width: 90%; height: auto;">
+</header>
+
+<h1>Uma surpresa para ti, meu amor 🥰</h1>
+<p class="initial-text">Este ano, só descanso, paz, e nós juntos.</p>
+<button id="startBtn" class="button" aria-label="Começar a surpresa">Começar 💖</button>
+
+<div id="fase1" class="section" role="region" aria-labelledby="fase1Title" tabindex="-1">
+  <div class="text-content">
+    <p>Este ano, sem saber bem o que te oferecer, parei para pensar e apercebi-me que tu não tens tido realmente um momento para descansar. Entre dias cheios de trabalho e semanas sem folgas, tem faltado aquele tempo só para ti — para respirar, relaxar e recarregar energias.</p>
+    <button id="toFase2" class="button" aria-label="Continuar para a fase 2">Continuar ✨</button>
+  </div>
+</div>
+
+<div id="fase2" class="section" role="region" aria-labelledby="fase2Title" tabindex="-1">
+  <div class="text-content">
+    <p>Cada momento ao teu lado é um presente. Desta vez, quero ser eu a oferecer um.</p>
+    <button id="toSurpresa" class="button" aria-label="Ver a surpresa final">Ver Surpresa 🎁</button>
+  </div>
+</div>
+
+<div id="surpresaFinal" class="section" role="region" aria-labelledby="surpresaFinalTitle" tabindex="-1">
+  <div class="text-content">
+    <h2 id="surpresaFinalTitle" style="color: #7a4e35;">🏞️ A Surpresa</h2>
+    <p style="font-weight: bold; margin-top: 10px;">Estadia de 2 noites no Luna Arcos Hotel Nature & Wellness</p>
+    <p>📍 Arcos de Valdevez, coração do Alto Minho</p>
+    <p>📅 Check‑in: 14 Outubro · Check‑out: 16 Outubro</p>
+    <p>🍽️ Inclui: pequeno-almoço e acesso ao spa (piscina interior, jacuzzi...)</p>
+    <div id="countdown"></div>
+
+    <div class="gallery" aria-label="Galeria de imagens do hotel">
+      <img src="images/303298626.jpg" alt="Hotel" class="active" />
+      <img src="images/259400195.jpg" alt="Piscina Hotel" />
+      <img src="images/298722378.jpg" alt="Quarto Hotel" />
+      <img src="images/299021840.jpg" alt="Jacuzzi" />
+	  <img src="images/298724970.jpg" alt="Spa" />
+      <img src="images/259393794.jpg" alt="Piscina" />
+    </div>
+
+    <div id="map" aria-label="Mapa da localização do hotel"></div>
+    <p><a href="https://www.google.com/maps/dir/?api=1&destination=41.851377096718295,-8.417532808410275" target="_blank" class="button" rel="noopener noreferrer" aria-label="Ver rota no Google Maps para o Luna Arcos Hotel">Ver rota no Google Maps</a></p>
+  </div>
+</div>
+
+<audio id="audio" controls loop style="display:none;">
+  <source src="musica.mp3" type="audio/mpeg" />
+  O teu navegador não suporta áudio.
+</audio>
+
+<canvas id="confetti-canvas" aria-hidden="true"></canvas>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+<script>
+  const btnStart = document.getElementById('startBtn');
+  const audio = document.getElementById('audio');
+  const fase1 = document.getElementById('fase1');
+  const fase2 = document.getElementById('fase2');
+  const surpresaFinal = document.getElementById('surpresaFinal');
+  const btnFase2 = document.getElementById('toFase2');
+  const btnSurpresa = document.getElementById('toSurpresa');
+  const headerImage = document.getElementById('headerImage');
+  const confettiCanvas = document.getElementById('confetti-canvas');
+
+  btnStart.onclick = () => {
+    headerImage.style.display = 'none';
+    btnStart.style.display = 'none';
+    showSection(fase1);
+  };
+
+  btnFase2.onclick = () => {
+    showSection(fase2);
+  };
+
+btnSurpresa.onclick = () => {
+  showSection(surpresaFinal);
+  startSurpresa();
+  startConfetti();
+  
+  audio.volume = 0.2;  // volume a 20%
+  audio.play();        // começa a tocar aqui
+};
+
+function showSection(sectionToShow) {
+  [fase1, fase2, surpresaFinal].forEach(section => {
+    section.classList.remove('active');
+    const text = section.querySelector('.text-content');
+    if (text) {
+      text.classList.remove('visible');
+    }
+  });
+  sectionToShow.classList.add('active');
+  const text = sectionToShow.querySelector('.text-content');
+  if (text) {
+    setTimeout(() => {
+      text.classList.add('visible');
+    }, 50);
+  }
+  if(sectionToShow !== surpresaFinal){
+    stopConfetti();
+  }
+  if(sectionToShow === surpresaFinal){
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 200);
+
+    audio.style.display = 'block';  // Mostrar player
+    audio.volume = 0.2;              // Volume 20%
+    audio.play();                    // Tocar música
+  } else {
+    audio.pause();                  // Parar música
+    audio.style.display = 'none';   // Ocultar player
+  }
+
+  sectionToShow.focus();
+}
+
+ // Contador regressivo
+    const countdown = document.getElementById('countdown');
+    const target = new Date('2025-09-20T15:00:00');
+
+    setInterval(() => {
+      const now = new Date();
+      const diff = target - now;
+      if (diff > 0) {
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+        const minutes = Math.floor((diff / (1000 * 60)) % 60);
+        const seconds = Math.floor((diff / 1000) % 60);
+        countdown.innerText = `Faltam ${days}d ${hours}h ${minutes}m ${seconds}s para a estadia ✨`;
+      } else {
+        countdown.innerText = 'É HOJE! 🎉';
+      }
+    }, 1000);
+
+  // --------- Galeria slideshow ---------
+  const gallery = surpresaFinal.querySelector('.gallery');
+  const images = gallery.querySelectorAll('img');
+  let currentImage = 0;
+  setInterval(() => {
+    images[currentImage].classList.remove('active');
+    currentImage = (currentImage + 1) % images.length;
+    images[currentImage].classList.add('active');
+  }, 4000);
+
+    // Mapa interativo
+const map = L.map('map').setView([41.851377096718295, -8.417532808410275], 13);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 18,
+  attribution: '© OpenStreetMap'
+}).addTo(map);
+
+L.marker([41.851377096718295, -8.417532808410275])
+  .addTo(map)
+  .bindPopup('<b>Luna Arcos Hotel Nature & Wellness</b>')
+  .openPopup();
+
+  // --------- Confetti ---------
+  const ctx = confettiCanvas.getContext('2d');
+  let W, H;
+  let confettiParticles = [];
+  let animationFrameId = null;
+  let isConfettiRunning = false;
+
+  function resizeCanvas() {
+    W = window.innerWidth;
+    H = window.innerHeight;
+    confettiCanvas.width = W;
+    confettiCanvas.height = H;
+  }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  const confettiColors = ['#f94144', '#f3722c', '#f8961e', '#f9c74f', '#90be6d', '#43aa8b', '#577590'];
+  const maxConfetti = 150;
+
+  function randomRange(min, max) {
+    return Math.random() * (max - min) + min;
+  }
+
+  class Confetto {
+    constructor() {
+      this.x = Math.random() * W;
+      this.y = Math.random() * H - H;
+      this.r = randomRange(4, 8);
+      this.d = Math.random() * maxConfetti + 10;
+      this.color = confettiColors[Math.floor(Math.random() * confettiColors.length)];
+      this.tilt = Math.floor(randomRange(-10, 10));
+      this.tiltAngleIncrement = randomRange(0.05, 0.12);
+      this.tiltAngle = 0;
+    }
+    draw() {
+      ctx.beginPath();
+      ctx.lineWidth = this.r / 2;
+      ctx.strokeStyle = this.color;
+      ctx.moveTo(this.x + this.tilt + this.r / 4, this.y);
+      ctx.lineTo(this.x + this.tilt, this.y + this.tilt + this.r / 4);
+      ctx.stroke();
+    }
+    update() {
+      this.tiltAngle += this.tiltAngleIncrement;
+      this.y += (Math.cos(this.d) + 3 + this.r / 2) / 2;
+      this.x += Math.sin(this.d);
+      this.tilt = Math.sin(this.tiltAngle) * 15;
+
+      if (this.y > H) {
+        this.x = Math.random() * W;
+        this.y = -20;
+        this.tilt = Math.floor(randomRange(-10, 10));
+      }
+    }
+  }
+
+  function startConfetti() {
+    if (isConfettiRunning) return;
+    isConfettiRunning = true;
+    confettiParticles = [];
+    for (let i = 0; i < maxConfetti; i++) {
+      confettiParticles.push(new Confetto());
+    }
+    confettiCanvas.style.display = 'block';
+    animationFrameId = requestAnimationFrame(drawConfetti);
+
+    setTimeout(() => {
+      stopConfetti();
+    }, 10000);
+  }
+
+  function stopConfetti() {
+    isConfettiRunning = false;
+    confettiCanvas.style.display = 'none';
+    if (animationFrameId) {
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = null;
+    }
+  }
+
+  function drawConfetti() {
+    ctx.clearRect(0, 0, W, H);
+    confettiParticles.forEach(p => {
+      p.update();
+      p.draw();
+    });
+    if (isConfettiRunning) {
+      animationFrameId = requestAnimationFrame(drawConfetti);
+    }
+  }
+
+  // --------- Função para iniciar animações da surpresa final ---------
+  function startSurpresa() {
+    // A contagem já está ativa pelo setInterval
+    // O slideshow e mapa estão sempre prontos — não precisam reiniciar aqui
+  }
+</script>
+</body>
+</html>
